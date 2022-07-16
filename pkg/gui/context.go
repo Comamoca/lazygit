@@ -8,6 +8,7 @@ import (
 	"github.com/jesseduffield/generics/slices"
 	"github.com/jesseduffield/gocui"
 	"github.com/jesseduffield/lazygit/pkg/gui/types"
+	"github.com/samber/lo"
 )
 
 // This file is for the management of contexts. There is a context stack such that
@@ -69,21 +70,42 @@ func (gui *Gui) pushContext(c types.Context, opts types.OnFocusOpts) error {
 		return nil
 	}
 
+	gui.Log.Warnf("pushing context %s", c.GetKey())
+
 	gui.State.ContextManager.Lock()
+
+	if len(gui.State.ContextManager.ContextStack) > 0 && gui.State.ContextManager.ContextStack[len(gui.State.ContextManager.ContextStack)-1].GetKey() == c.GetKey() {
+		// already on top
+		gui.State.ContextManager.Unlock()
+		return nil
+	}
 
 	// push onto stack
 	// if we are switching to a side context, remove all other contexts in the stack
 	if c.GetKind() == types.SIDE_CONTEXT {
 		for _, stackContext := range gui.State.ContextManager.ContextStack {
-			if stackContext.GetKey() != c.GetKey() {
+			if err := gui.deactivateContext(stackContext, types.OnFocusLostOpts{NewContextKey: c.GetKey()}); err != nil {
+				gui.State.ContextManager.Unlock()
+				return err
+			}
+		}
+		gui.State.ContextManager.ContextStack = []types.Context{c}
+	} else if c.GetKind() == types.MAIN_CONTEXT {
+		// if we're switching to a main context, remove all other main contexts in the stack
+		for _, stackContext := range gui.State.ContextManager.ContextStack {
+			if stackContext.GetKind() == types.MAIN_CONTEXT {
 				if err := gui.deactivateContext(stackContext, types.OnFocusLostOpts{NewContextKey: c.GetKey()}); err != nil {
 					gui.State.ContextManager.Unlock()
 					return err
 				}
 			}
 		}
-		gui.State.ContextManager.ContextStack = []types.Context{c}
-	} else if len(gui.State.ContextManager.ContextStack) == 0 || gui.currentContextWithoutLock().GetKey() != c.GetKey() {
+		gui.State.ContextManager.ContextStack = lo.Filter(gui.State.ContextManager.ContextStack, func(stackContext types.Context, _ int) bool {
+			return stackContext.GetKind() != types.MAIN_CONTEXT
+		})
+		gui.State.ContextManager.ContextStack = append(gui.State.ContextManager.ContextStack, c)
+		gui.Log.Warn("pushed context")
+	} else {
 		// Do not append if the one at the end is the same context (e.g. opening a menu from a menu)
 		// In that case we'll just close the menu entirely when the user hits escape.
 

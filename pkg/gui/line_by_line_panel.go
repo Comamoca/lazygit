@@ -17,28 +17,27 @@ import (
 func (gui *Gui) refreshLineByLinePanel(diff string, secondaryDiff string, title string, secondaryTitle string, secondaryFocused bool, selectedLineIdx int) (bool, error) {
 	gui.splitMainPanel(true)
 
-	var oldState *lbl.State
-	if gui.State.Panels.LineByLine != nil {
-		oldState = gui.State.Panels.LineByLine.State
+	oldState := gui.State.Contexts.Staging.GetState()
+
+	if secondaryFocused {
+		diff, secondaryDiff = secondaryDiff, diff
 	}
 
 	state := lbl.NewState(diff, selectedLineIdx, oldState, gui.Log)
+	gui.State.Contexts.Staging.SetState(state)
 	if state == nil {
 		return true, nil
 	}
 
-	gui.State.Panels.LineByLine = &LblPanelState{
-		State:            state,
-		SecondaryFocused: secondaryFocused,
-	}
+	gui.State.Contexts.Staging.SetState(state)
 
-	mainContent, err := gui.getMainDiffForLbl(gui.State.Panels.LineByLine)
+	focusedContent, err := gui.getMainDiffForLbl(gui.State.Contexts.Staging.GetState())
 	if err != nil {
 		return false, err
 	}
 
 	// TODO: see if this should happen AFTER setting content.
-	if err := gui.focusSelection(gui.State.Panels.LineByLine); err != nil {
+	if err := gui.focusSelection(gui.State.Contexts.Staging.GetState()); err != nil {
 		return false, err
 	}
 
@@ -46,7 +45,14 @@ func (gui *Gui) refreshLineByLinePanel(diff string, secondaryDiff string, title 
 
 	pair := gui.currentLblMainPair()
 	gui.moveMainContextPairToTop(pair)
-	secondaryContent := secondaryPatchParser.Render(-1, -1, nil)
+	unfocusedContent := secondaryPatchParser.Render(-1, -1, nil)
+
+	var mainContent, secondaryContent string
+	if secondaryFocused {
+		mainContent, secondaryContent = unfocusedContent, focusedContent
+	} else {
+		mainContent, secondaryContent = focusedContent, unfocusedContent
+	}
 
 	return false, gui.refreshMainViews(refreshMainOpts{
 		pair: gui.currentLblMainPair(),
@@ -62,7 +68,7 @@ func (gui *Gui) refreshLineByLinePanel(diff string, secondaryDiff string, title 
 }
 
 func (gui *Gui) handleSelectPrevLine() error {
-	return gui.withLBLActiveCheck(func(state *LblPanelState) error {
+	return gui.withLBLActiveCheck(func(state *lbl.State) error {
 		state.CycleSelection(false)
 
 		return gui.refreshAndFocusLblPanel(state)
@@ -70,7 +76,7 @@ func (gui *Gui) handleSelectPrevLine() error {
 }
 
 func (gui *Gui) handleSelectNextLine() error {
-	return gui.withLBLActiveCheck(func(state *LblPanelState) error {
+	return gui.withLBLActiveCheck(func(state *lbl.State) error {
 		state.CycleSelection(true)
 
 		return gui.refreshAndFocusLblPanel(state)
@@ -78,7 +84,7 @@ func (gui *Gui) handleSelectNextLine() error {
 }
 
 func (gui *Gui) handleSelectPrevHunk() error {
-	return gui.withLBLActiveCheck(func(state *LblPanelState) error {
+	return gui.withLBLActiveCheck(func(state *lbl.State) error {
 		state.CycleHunk(false)
 
 		return gui.refreshAndFocusLblPanel(state)
@@ -86,7 +92,7 @@ func (gui *Gui) handleSelectPrevHunk() error {
 }
 
 func (gui *Gui) handleSelectNextHunk() error {
-	return gui.withLBLActiveCheck(func(state *LblPanelState) error {
+	return gui.withLBLActiveCheck(func(state *lbl.State) error {
 		state.CycleHunk(true)
 
 		return gui.refreshAndFocusLblPanel(state)
@@ -94,7 +100,7 @@ func (gui *Gui) handleSelectNextHunk() error {
 }
 
 func (gui *Gui) copySelectedToClipboard() error {
-	return gui.withLBLActiveCheck(func(state *LblPanelState) error {
+	return gui.withLBLActiveCheck(func(state *lbl.State) error {
 		selected := state.PlainRenderSelected()
 
 		gui.c.LogAction(gui.c.Tr.Actions.CopySelectedTextToClipboard)
@@ -106,7 +112,7 @@ func (gui *Gui) copySelectedToClipboard() error {
 	})
 }
 
-func (gui *Gui) refreshAndFocusLblPanel(state *LblPanelState) error {
+func (gui *Gui) refreshAndFocusLblPanel(state *lbl.State) error {
 	if err := gui.refreshMainViewForLineByLine(state); err != nil {
 		return err
 	}
@@ -115,7 +121,7 @@ func (gui *Gui) refreshAndFocusLblPanel(state *LblPanelState) error {
 }
 
 func (gui *Gui) handleLBLMouseDown() error {
-	return gui.withLBLActiveCheck(func(state *LblPanelState) error {
+	return gui.withLBLActiveCheck(func(state *lbl.State) error {
 		state.SelectNewLineForRange(gui.currentLblMainPair().main.GetView().SelectedLineIdx())
 
 		return gui.refreshAndFocusLblPanel(state)
@@ -123,14 +129,14 @@ func (gui *Gui) handleLBLMouseDown() error {
 }
 
 func (gui *Gui) handleMouseDrag() error {
-	return gui.withLBLActiveCheck(func(state *LblPanelState) error {
+	return gui.withLBLActiveCheck(func(state *lbl.State) error {
 		state.SelectLine(gui.currentLblMainPair().main.GetView().SelectedLineIdx())
 
 		return gui.refreshAndFocusLblPanel(state)
 	})
 }
 
-func (gui *Gui) refreshMainViewForLineByLine(state *LblPanelState) error {
+func (gui *Gui) refreshMainViewForLineByLine(state *lbl.State) error {
 	diff, err := gui.getMainDiffForLbl(state)
 	if err != nil {
 		return err
@@ -143,7 +149,7 @@ func (gui *Gui) refreshMainViewForLineByLine(state *LblPanelState) error {
 	return nil
 }
 
-func (gui *Gui) getMainDiffForLbl(state *LblPanelState) (string, error) {
+func (gui *Gui) getMainDiffForLbl(state *lbl.State) (string, error) {
 	var includedLineIndices []int
 	// I'd prefer not to have knowledge of contexts using this file but I'm not sure
 	// how to get around this
@@ -173,7 +179,7 @@ func (gui *Gui) currentLblMainPair() MainContextPair {
 
 // focusSelection works out the best focus for the staging panel given the
 // selected line and size of the hunk
-func (gui *Gui) focusSelection(state *LblPanelState) error {
+func (gui *Gui) focusSelection(state *lbl.State) error {
 	view := gui.currentLblMainPair().main.GetView()
 
 	_, viewHeight := view.Size()
@@ -192,7 +198,7 @@ func (gui *Gui) focusSelection(state *LblPanelState) error {
 }
 
 func (gui *Gui) handleToggleSelectRange() error {
-	return gui.withLBLActiveCheck(func(state *LblPanelState) error {
+	return gui.withLBLActiveCheck(func(state *lbl.State) error {
 		state.ToggleSelectRange()
 
 		return gui.refreshMainViewForLineByLine(state)
@@ -200,7 +206,7 @@ func (gui *Gui) handleToggleSelectRange() error {
 }
 
 func (gui *Gui) handleToggleSelectHunk() error {
-	return gui.withLBLActiveCheck(func(state *LblPanelState) error {
+	return gui.withLBLActiveCheck(func(state *lbl.State) error {
 		state.ToggleSelectHunk()
 
 		return gui.refreshAndFocusLblPanel(state)
@@ -208,11 +214,11 @@ func (gui *Gui) handleToggleSelectHunk() error {
 }
 
 func (gui *Gui) escapeLineByLinePanel() {
-	gui.State.Panels.LineByLine = nil
+	gui.State.Contexts.Staging.SetState(nil)
 }
 
 func (gui *Gui) handleOpenFileAtLine() error {
-	return gui.withLBLActiveCheck(func(state *LblPanelState) error {
+	return gui.withLBLActiveCheck(func(state *lbl.State) error {
 		// again, would be good to use inheritance here (or maybe even composition)
 		var filename string
 		switch gui.currentContext().GetKey() {
@@ -238,7 +244,7 @@ func (gui *Gui) handleOpenFileAtLine() error {
 }
 
 func (gui *Gui) handleLineByLineNextPage() error {
-	return gui.withLBLActiveCheck(func(state *LblPanelState) error {
+	return gui.withLBLActiveCheck(func(state *lbl.State) error {
 		state.SetLineSelectMode()
 		state.AdjustSelectedLineIdx(gui.pageDelta(gui.currentLblMainPair().main.GetView()))
 
@@ -247,7 +253,7 @@ func (gui *Gui) handleLineByLineNextPage() error {
 }
 
 func (gui *Gui) handleLineByLinePrevPage() error {
-	return gui.withLBLActiveCheck(func(state *LblPanelState) error {
+	return gui.withLBLActiveCheck(func(state *lbl.State) error {
 		state.SetLineSelectMode()
 		state.AdjustSelectedLineIdx(-gui.pageDelta(gui.currentLblMainPair().main.GetView()))
 
@@ -256,7 +262,7 @@ func (gui *Gui) handleLineByLinePrevPage() error {
 }
 
 func (gui *Gui) handleLineByLineGotoBottom() error {
-	return gui.withLBLActiveCheck(func(state *LblPanelState) error {
+	return gui.withLBLActiveCheck(func(state *lbl.State) error {
 		state.SelectBottom()
 
 		return gui.refreshAndFocusLblPanel(state)
@@ -264,7 +270,7 @@ func (gui *Gui) handleLineByLineGotoBottom() error {
 }
 
 func (gui *Gui) handleLineByLineGotoTop() error {
-	return gui.withLBLActiveCheck(func(state *LblPanelState) error {
+	return gui.withLBLActiveCheck(func(state *lbl.State) error {
 		state.SelectTop()
 
 		return gui.refreshAndFocusLblPanel(state)
@@ -272,7 +278,7 @@ func (gui *Gui) handleLineByLineGotoTop() error {
 }
 
 func (gui *Gui) handlelineByLineNavigateTo(selectedLineIdx int) error {
-	return gui.withLBLActiveCheck(func(state *LblPanelState) error {
+	return gui.withLBLActiveCheck(func(state *lbl.State) error {
 		state.SetLineSelectMode()
 		state.SelectLine(selectedLineIdx)
 
@@ -280,11 +286,11 @@ func (gui *Gui) handlelineByLineNavigateTo(selectedLineIdx int) error {
 	})
 }
 
-func (gui *Gui) withLBLActiveCheck(f func(*LblPanelState) error) error {
+func (gui *Gui) withLBLActiveCheck(f func(*lbl.State) error) error {
 	gui.Mutexes.LineByLinePanelMutex.Lock()
 	defer gui.Mutexes.LineByLinePanelMutex.Unlock()
 
-	state := gui.State.Panels.LineByLine
+	state := gui.State.Contexts.Staging.GetState()
 	if state == nil {
 		return nil
 	}
@@ -298,6 +304,6 @@ func (gui *Gui) handleLineByLineEdit() error {
 		return nil
 	}
 
-	lineNumber := gui.State.Panels.LineByLine.CurrentLineNumber()
+	lineNumber := gui.State.Contexts.Staging.GetState().CurrentLineNumber()
 	return gui.helpers.Files.EditFileAtLine(file.Name, lineNumber)
 }

@@ -63,7 +63,7 @@ func (gui *Gui) handleDiffContextSizeChange() error {
 	case context.PATCH_BUILDING_MAIN_CONTEXT_KEY:
 		return gui.handleRefreshPatchBuildingPanel(-1)
 	case context.STAGING_MAIN_CONTEXT_KEY:
-		return gui.handleRefreshStagingPanel(false, -1)
+		return gui.handleRefreshStagingPanel(-1)
 	default:
 		return currentContext.HandleRenderToMain()
 	}

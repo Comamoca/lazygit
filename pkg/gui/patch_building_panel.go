@@ -1,6 +1,7 @@
 package gui
 
 import (
+	"github.com/jesseduffield/lazygit/pkg/gui/lbl"
 	"github.com/jesseduffield/lazygit/pkg/gui/types"
 	"github.com/samber/lo"
 )
@@ -60,7 +61,7 @@ func (gui *Gui) onPatchBuildingFocus(selectedLineIdx int) error {
 }
 
 func (gui *Gui) handleToggleSelectionForPatch() error {
-	err := gui.withLBLActiveCheck(func(state *LblPanelState) error {
+	err := gui.withLBLActiveCheck(func(state *lbl.State) error {
 		toggleFunc := gui.git.Patch.PatchManager.AddFileLineRange
 		filename := gui.getSelectedCommitFileName()
 		includedLineIndices, err := gui.git.Patch.PatchManager.GetFileIncLineIndices(filename)

@@ -82,8 +82,8 @@ type ContextTree struct {
 	Suggestions            *SuggestionsContext
 	Normal                 types.Context
 	NormalSecondary        types.Context
-	Staging                types.Context
-	StagingSecondary       types.Context
+	Staging                *LBLContext
+	StagingSecondary       *LBLContext
 	PatchBuilding          types.Context
 	PatchBuildingSecondary types.Context
 	Merging                types.Context

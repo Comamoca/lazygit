@@ -3,6 +3,7 @@ package types
 import (
 	"github.com/jesseduffield/gocui"
 	"github.com/jesseduffield/lazygit/pkg/config"
+	"github.com/jesseduffield/lazygit/pkg/gui/lbl"
 )
 
 type ContextKind int
@@ -81,6 +82,14 @@ type IListContext interface {
 	FocusLine()
 
 	GetViewTrait() IViewTrait
+}
+
+type ILBLContext interface {
+	Context
+
+	GetState() *lbl.State
+	GetViewTrait() IViewTrait
+	GetIncludedLineIndices() []int
 }
 
 type IViewTrait interface {

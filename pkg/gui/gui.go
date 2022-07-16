@@ -36,6 +36,7 @@ import (
 	"github.com/jesseduffield/lazygit/pkg/theme"
 	"github.com/jesseduffield/lazygit/pkg/updates"
 	"github.com/jesseduffield/lazygit/pkg/utils"
+	deadlock "github.com/sasha-s/go-deadlock"
 	"gopkg.in/ozeidan/fuzzy-patricia.v3/patricia"
 )
 
@@ -58,13 +59,13 @@ var OverlappingEdges = false
 
 type ContextManager struct {
 	ContextStack []types.Context
-	sync.RWMutex
+	deadlock.RWMutex
 }
 
 func NewContextManager(initialContext types.Context) ContextManager {
 	return ContextManager{
 		ContextStack: []types.Context{initialContext},
-		RWMutex:      sync.RWMutex{},
+		RWMutex:      deadlock.RWMutex{},
 	}
 }
 
@@ -237,13 +238,13 @@ const (
 // if you add a new mutex here be sure to instantiate it. We're using pointers to
 // mutexes so that we can pass the mutexes to controllers.
 type guiMutexes struct {
-	RefreshingFilesMutex  *sync.Mutex
-	RefreshingStatusMutex *sync.Mutex
+	RefreshingFilesMutex  *deadlock.Mutex
+	RefreshingStatusMutex *deadlock.Mutex
 	SyncMutex             *sync.Mutex
-	LocalCommitsMutex     *sync.Mutex
-	LineByLinePanelMutex  *sync.Mutex
-	SubprocessMutex       *sync.Mutex
-	PopupMutex            *sync.Mutex
+	LocalCommitsMutex     *deadlock.Mutex
+	LineByLinePanelMutex  *deadlock.Mutex
+	SubprocessMutex       *deadlock.Mutex
+	PopupMutex            *deadlock.Mutex
 }
 
 func (gui *Gui) onNewRepo(startArgs types.StartArgs, reuseState bool) error {
@@ -399,13 +400,13 @@ func NewGui(
 		// sake of backwards compatibility. We're making use of short circuiting here
 		ShowExtrasWindow: cmn.UserConfig.Gui.ShowCommandLog && !config.GetAppState().HideCommandLog,
 		Mutexes: guiMutexes{
-			RefreshingFilesMutex:  &sync.Mutex{},
-			RefreshingStatusMutex: &sync.Mutex{},
+			RefreshingFilesMutex:  &deadlock.Mutex{},
+			RefreshingStatusMutex: &deadlock.Mutex{},
 			SyncMutex:             &sync.Mutex{},
-			LocalCommitsMutex:     &sync.Mutex{},
-			LineByLinePanelMutex:  &sync.Mutex{},
-			SubprocessMutex:       &sync.Mutex{},
-			PopupMutex:            &sync.Mutex{},
+			LocalCommitsMutex:     &deadlock.Mutex{},
+			LineByLinePanelMutex:  &deadlock.Mutex{},
+			SubprocessMutex:       &deadlock.Mutex{},
+			PopupMutex:            &deadlock.Mutex{},
 		},
 		InitialDir: initialDir,
 	}

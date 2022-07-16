@@ -117,12 +117,6 @@ func (gui *Gui) popupPanelFocused() bool {
 	return gui.isPopupPanel(gui.currentViewName())
 }
 
-// secondaryViewFocused tells us whether it appears that the secondary view is focused. The view is actually never focused for real: we just swap the main and secondary views and then you're still focused on the main view so that we can give you access to all its keybindings for free. I will probably regret this design decision soon enough.
-func (gui *Gui) secondaryViewFocused() bool {
-	state := gui.State.Panels.LineByLine
-	return state != nil && state.SecondaryFocused
-}
-
 func (gui *Gui) onViewTabClick(windowName string, tabIndex int) error {
 	tabs := gui.viewTabMap()[windowName]
 	if len(tabs) == 0 {

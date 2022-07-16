@@ -69,65 +69,55 @@ func (gui *Gui) contextTree() *context.ContextTree {
 			}),
 			context.ContextCallbackOpts{},
 		),
-		Staging: context.NewSimpleContext(
-			context.NewBaseContext(context.NewBaseContextOpts{
-				Kind:       types.MAIN_CONTEXT,
-				View:       gui.Views.Staging,
-				WindowName: "main",
-				Key:        context.STAGING_MAIN_CONTEXT_KEY,
-				Focusable:  true,
-			}),
-			context.ContextCallbackOpts{
-				OnFocus: func(opts types.OnFocusOpts) error {
-					gui.Views.Staging.Wrap = false
-					gui.Views.StagingSecondary.Wrap = false
+		Staging: context.NewLBLContext(
+			gui.Views.Staging,
+			"main",
+			context.STAGING_MAIN_CONTEXT_KEY,
+			func(opts types.OnFocusOpts) error {
+				gui.Views.Staging.Wrap = false
+				gui.Views.StagingSecondary.Wrap = false
 
-					forceSecondaryFocused := false
-					selectedLineIdx := -1
-					if opts.ClickedWindowName != "" {
-						if opts.ClickedWindowName == "main" || opts.ClickedWindowName == "secondary" {
-							selectedLineIdx = opts.ClickedViewLineIdx
-						}
-						if opts.ClickedWindowName == "secondary" {
-							forceSecondaryFocused = true
-						}
-					}
-					return gui.onStagingFocus(forceSecondaryFocused, selectedLineIdx)
-				},
-				OnFocusLost: func(opts types.OnFocusLostOpts) error {
-					if opts.NewContextKey != context.STAGING_SECONDARY_CONTEXT_KEY {
-						gui.Views.Staging.Wrap = true
-						gui.Views.StagingSecondary.Wrap = true
-						gui.escapeLineByLinePanel()
-					}
-					return nil
-				},
+				selectedLineIdx := -1
+				if opts.ClickedWindowName != "" {
+					selectedLineIdx = opts.ClickedViewLineIdx
+				}
+				return gui.onStagingFocus(false, selectedLineIdx)
 			},
+			func(opts types.OnFocusLostOpts) error {
+				if opts.NewContextKey != context.STAGING_SECONDARY_CONTEXT_KEY {
+					gui.Views.Staging.Wrap = true
+					gui.Views.StagingSecondary.Wrap = true
+					gui.escapeLineByLinePanel()
+				}
+				return nil
+			},
+			func() []int { return nil },
+			gui.c,
 		),
-		StagingSecondary: context.NewSimpleContext(
-			context.NewBaseContext(context.NewBaseContextOpts{
-				Kind:       types.MAIN_CONTEXT,
-				View:       gui.Views.StagingSecondary,
-				WindowName: "secondary",
-				Key:        context.STAGING_SECONDARY_CONTEXT_KEY,
-				Focusable:  false,
-			}),
-			context.ContextCallbackOpts{
-				OnFocus: func(opts types.OnFocusOpts) error {
-					gui.Views.Staging.Wrap = false
-					gui.Views.StagingSecondary.Wrap = false
+		StagingSecondary: context.NewLBLContext(
+			gui.Views.StagingSecondary,
+			"secondary",
+			context.STAGING_SECONDARY_CONTEXT_KEY,
+			func(opts types.OnFocusOpts) error {
+				gui.Views.Staging.Wrap = false
+				gui.Views.StagingSecondary.Wrap = false
 
-					return nil
-				},
-				OnFocusLost: func(opts types.OnFocusLostOpts) error {
-					if opts.NewContextKey != context.STAGING_MAIN_CONTEXT_KEY {
-						gui.Views.Staging.Wrap = true
-						gui.Views.StagingSecondary.Wrap = true
-						gui.escapeLineByLinePanel()
-					}
-					return nil
-				},
+				selectedLineIdx := -1
+				if opts.ClickedWindowName != "" {
+					selectedLineIdx = opts.ClickedViewLineIdx
+				}
+				return gui.onStagingFocus(true, selectedLineIdx)
 			},
+			func(opts types.OnFocusLostOpts) error {
+				if opts.NewContextKey != context.STAGING_MAIN_CONTEXT_KEY {
+					gui.Views.Staging.Wrap = true
+					gui.Views.StagingSecondary.Wrap = true
+					gui.escapeLineByLinePanel()
+				}
+				return nil
+			},
+			func() []int { return nil },
+			gui.c,
 		),
 		PatchBuilding: context.NewSimpleContext(
 			context.NewBaseContext(context.NewBaseContextOpts{
