@@ -139,6 +139,7 @@ func (gui *Gui) layout(g *gocui.Gui) error {
 		view.SetOnSelectItem(gui.onSelectItemWrapper(listContext.OnSearchSelect))
 	}
 
+	// TODO: FIX THIS
 	gui.Views.Main.SetOnSelectItem(gui.onSelectItemWrapper(gui.handlelineByLineNavigateTo))
 
 	mainViewWidth, mainViewHeight := gui.Views.Main.Size()

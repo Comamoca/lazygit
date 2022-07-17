@@ -67,73 +67,12 @@ func (gui *Gui) refreshLineByLinePanel(diff string, secondaryDiff string, title 
 	})
 }
 
-func (gui *Gui) handleSelectPrevLine() error {
-	return gui.withLBLActiveCheck(func(state *lbl.State) error {
-		state.CycleSelection(false)
-
-		return gui.refreshAndFocusLblPanel(state)
-	})
-}
-
-func (gui *Gui) handleSelectNextLine() error {
-	return gui.withLBLActiveCheck(func(state *lbl.State) error {
-		state.CycleSelection(true)
-
-		return gui.refreshAndFocusLblPanel(state)
-	})
-}
-
-func (gui *Gui) handleSelectPrevHunk() error {
-	return gui.withLBLActiveCheck(func(state *lbl.State) error {
-		state.CycleHunk(false)
-
-		return gui.refreshAndFocusLblPanel(state)
-	})
-}
-
-func (gui *Gui) handleSelectNextHunk() error {
-	return gui.withLBLActiveCheck(func(state *lbl.State) error {
-		state.CycleHunk(true)
-
-		return gui.refreshAndFocusLblPanel(state)
-	})
-}
-
-func (gui *Gui) copySelectedToClipboard() error {
-	return gui.withLBLActiveCheck(func(state *lbl.State) error {
-		selected := state.PlainRenderSelected()
-
-		gui.c.LogAction(gui.c.Tr.Actions.CopySelectedTextToClipboard)
-		if err := gui.os.CopyToClipboard(selected); err != nil {
-			return gui.c.Error(err)
-		}
-
-		return nil
-	})
-}
-
 func (gui *Gui) refreshAndFocusLblPanel(state *lbl.State) error {
 	if err := gui.refreshMainViewForLineByLine(state); err != nil {
 		return err
 	}
 
 	return gui.focusSelection(state)
-}
-
-func (gui *Gui) handleLBLMouseDown() error {
-	return gui.withLBLActiveCheck(func(state *lbl.State) error {
-		state.SelectNewLineForRange(gui.currentLblMainPair().main.GetView().SelectedLineIdx())
-
-		return gui.refreshAndFocusLblPanel(state)
-	})
-}
-
-func (gui *Gui) handleMouseDrag() error {
-	return gui.withLBLActiveCheck(func(state *lbl.State) error {
-		state.SelectLine(gui.currentLblMainPair().main.GetView().SelectedLineIdx())
-
-		return gui.refreshAndFocusLblPanel(state)
-	})
 }
 
 func (gui *Gui) refreshMainViewForLineByLine(state *lbl.State) error {
@@ -197,86 +136,11 @@ func (gui *Gui) focusSelection(state *lbl.State) error {
 	return view.SetCursor(0, selectedLineIdx-newOrigin)
 }
 
-func (gui *Gui) handleToggleSelectRange() error {
-	return gui.withLBLActiveCheck(func(state *lbl.State) error {
-		state.ToggleSelectRange()
-
-		return gui.refreshMainViewForLineByLine(state)
-	})
-}
-
-func (gui *Gui) handleToggleSelectHunk() error {
-	return gui.withLBLActiveCheck(func(state *lbl.State) error {
-		state.ToggleSelectHunk()
-
-		return gui.refreshAndFocusLblPanel(state)
-	})
-}
-
 func (gui *Gui) escapeLineByLinePanel() {
 	gui.State.Contexts.Staging.SetState(nil)
 }
 
-func (gui *Gui) handleOpenFileAtLine() error {
-	return gui.withLBLActiveCheck(func(state *lbl.State) error {
-		// again, would be good to use inheritance here (or maybe even composition)
-		var filename string
-		switch gui.currentContext().GetKey() {
-		case gui.State.Contexts.PatchBuilding.GetKey():
-			filename = gui.getSelectedCommitFileName()
-		case gui.State.Contexts.Staging.GetKey():
-			file := gui.getSelectedFile()
-			if file == nil {
-				return nil
-			}
-			filename = file.Name
-		default:
-		}
-
-		// need to look at current index, then work out what my hunk's header information is, and see how far my line is away from the hunk header
-		lineNumber := state.CurrentLineNumber()
-		if err := gui.os.OpenFileAtLine(filename, lineNumber); err != nil {
-			return err
-		}
-
-		return nil
-	})
-}
-
-func (gui *Gui) handleLineByLineNextPage() error {
-	return gui.withLBLActiveCheck(func(state *lbl.State) error {
-		state.SetLineSelectMode()
-		state.AdjustSelectedLineIdx(gui.pageDelta(gui.currentLblMainPair().main.GetView()))
-
-		return gui.refreshAndFocusLblPanel(state)
-	})
-}
-
-func (gui *Gui) handleLineByLinePrevPage() error {
-	return gui.withLBLActiveCheck(func(state *lbl.State) error {
-		state.SetLineSelectMode()
-		state.AdjustSelectedLineIdx(-gui.pageDelta(gui.currentLblMainPair().main.GetView()))
-
-		return gui.refreshAndFocusLblPanel(state)
-	})
-}
-
-func (gui *Gui) handleLineByLineGotoBottom() error {
-	return gui.withLBLActiveCheck(func(state *lbl.State) error {
-		state.SelectBottom()
-
-		return gui.refreshAndFocusLblPanel(state)
-	})
-}
-
-func (gui *Gui) handleLineByLineGotoTop() error {
-	return gui.withLBLActiveCheck(func(state *lbl.State) error {
-		state.SelectTop()
-
-		return gui.refreshAndFocusLblPanel(state)
-	})
-}
-
+// TODO: fix this
 func (gui *Gui) handlelineByLineNavigateTo(selectedLineIdx int) error {
 	return gui.withLBLActiveCheck(func(state *lbl.State) error {
 		state.SetLineSelectMode()
