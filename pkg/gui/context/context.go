@@ -84,7 +84,7 @@ type ContextTree struct {
 	NormalSecondary        types.Context
 	Staging                *LBLContext
 	StagingSecondary       *LBLContext
-	PatchBuilding          types.Context
+	PatchBuilding          *LBLContext
 	PatchBuildingSecondary types.Context
 	Merging                types.Context
 	Confirmation           types.Context

@@ -124,9 +124,10 @@ func (gui *Gui) resetControllers() {
 	filesRemoveController := controllers.NewFilesRemoveController(common)
 	stashController := controllers.NewStashController(common)
 	commitFilesController := controllers.NewCommitFilesController(common)
+	lblControllerFactory := controllers.NewLBLControllerFactory(common)
 	stagingController := controllers.NewStagingController(common, gui.State.Contexts.Staging, gui.State.Contexts.StagingSecondary)
 	stagingSecondaryController := controllers.NewStagingController(common, gui.State.Contexts.StagingSecondary, gui.State.Contexts.Staging)
-	lblControllerFactory := controllers.NewLBLControllerFactory(common)
+	patchBuildingController := controllers.NewPatchBuildingController(common)
 
 	setSubCommits := func(commits []*models.Commit) { gui.State.Model.SubCommits = commits }
 
@@ -161,6 +162,7 @@ func (gui *Gui) resetControllers() {
 
 	controllers.AttachControllers(gui.State.Contexts.Staging, stagingController, lblControllerFactory.Create(gui.State.Contexts.Staging))
 	controllers.AttachControllers(gui.State.Contexts.StagingSecondary, stagingSecondaryController)
+	controllers.AttachControllers(gui.State.Contexts.PatchBuilding, patchBuildingController, lblControllerFactory.Create(gui.State.Contexts.PatchBuilding))
 	controllers.AttachControllers(gui.State.Contexts.Files, filesController, filesRemoveController)
 	controllers.AttachControllers(gui.State.Contexts.Tags, tagsController)
 	controllers.AttachControllers(gui.State.Contexts.Submodules, submodulesController)

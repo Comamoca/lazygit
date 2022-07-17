@@ -119,33 +119,38 @@ func (gui *Gui) contextTree() *context.ContextTree {
 			func() []int { return nil },
 			gui.c,
 		),
-		PatchBuilding: context.NewSimpleContext(
-			context.NewBaseContext(context.NewBaseContextOpts{
-				Kind:       types.MAIN_CONTEXT,
-				View:       gui.Views.PatchBuilding,
-				WindowName: "main",
-				Key:        context.PATCH_BUILDING_MAIN_CONTEXT_KEY,
-				Focusable:  true,
-			}),
-			context.ContextCallbackOpts{
-				OnFocus: func(opts types.OnFocusOpts) error {
-					// no need to change wrap on the secondary view because it can't be interacted with
-					gui.Views.PatchBuilding.Wrap = false
+		PatchBuilding: context.NewLBLContext(
+			gui.Views.PatchBuilding,
+			"main",
+			context.PATCH_BUILDING_MAIN_CONTEXT_KEY,
+			func(opts types.OnFocusOpts) error {
+				// no need to change wrap on the secondary view because it can't be interacted with
+				gui.Views.PatchBuilding.Wrap = false
 
-					selectedLineIdx := -1
-					if opts.ClickedWindowName == "main" {
-						selectedLineIdx = opts.ClickedViewLineIdx
-					}
+				selectedLineIdx := -1
+				if opts.ClickedWindowName == "main" {
+					selectedLineIdx = opts.ClickedViewLineIdx
+				}
 
-					return gui.onPatchBuildingFocus(selectedLineIdx)
-				},
-				OnFocusLost: func(opts types.OnFocusLostOpts) error {
-					gui.Views.PatchBuilding.Wrap = true
-
-					gui.escapeLineByLinePanel()
-					return nil
-				},
+				return gui.onPatchBuildingFocus(selectedLineIdx)
 			},
+			func(opts types.OnFocusLostOpts) error {
+				gui.Views.PatchBuilding.Wrap = true
+
+				gui.escapeLineByLinePanel()
+				return nil
+			},
+			func() []int {
+				filename := gui.getSelectedCommitFileName()
+				includedLineIndices, err := gui.git.Patch.PatchManager.GetFileIncLineIndices(filename)
+				if err != nil {
+					gui.Log.Error(err)
+					return nil
+				}
+
+				return includedLineIndices
+			},
+			gui.c,
 		),
 		PatchBuildingSecondary: context.NewSimpleContext(
 			context.NewBaseContext(context.NewBaseContextOpts{
