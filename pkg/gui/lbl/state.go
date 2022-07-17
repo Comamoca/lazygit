@@ -178,9 +178,9 @@ func (s *State) AdjustSelectedLineIdx(change int) {
 	s.SelectLine(s.selectedLineIdx + change)
 }
 
-func (s *State) RenderForLineIndices(includedLineIndices []int) string {
+func (s *State) RenderForLineIndices(isFocused bool, includedLineIndices []int) string {
 	firstLineIdx, lastLineIdx := s.SelectedRange()
-	return s.patchParser.Render(firstLineIdx, lastLineIdx, includedLineIndices)
+	return s.patchParser.Render(isFocused, firstLineIdx, lastLineIdx, includedLineIndices)
 }
 
 func (s *State) PlainRenderSelected() string {

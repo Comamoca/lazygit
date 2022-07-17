@@ -94,7 +94,7 @@ type ILBLContext interface {
 	RenderAndFocus() error
 	Render() error
 	Focus() error
-	GetContentToRender() string
+	GetContentToRender(isFocused bool) string
 	NavigateTo(selectedLineIdx int) error
 }
 

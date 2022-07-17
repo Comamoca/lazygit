@@ -183,7 +183,7 @@ func parsePatch(patch string) ([]int, []int, []*PatchLine) {
 }
 
 // Render returns the coloured string of the diff with any selected lines highlighted
-func (p *PatchParser) Render(firstLineIndex int, lastLineIndex int, incLineIndices []int) string {
+func (p *PatchParser) Render(isFocused bool, firstLineIndex int, lastLineIndex int, incLineIndices []int) string {
 	contentToDisplay := slices.Some(p.PatchLines, func(line *PatchLine) bool {
 		return line.Content != ""
 	})
@@ -192,7 +192,7 @@ func (p *PatchParser) Render(firstLineIndex int, lastLineIndex int, incLineIndic
 	}
 
 	renderedLines := slices.MapWithIndex(p.PatchLines, func(patchLine *PatchLine, index int) string {
-		selected := index >= firstLineIndex && index <= lastLineIndex
+		selected := isFocused && index >= firstLineIndex && index <= lastLineIndex
 		included := lo.Contains(incLineIndices, index)
 		return patchLine.render(selected, included)
 	})

@@ -250,10 +250,6 @@ func (self *LBLController) isSelectedLineInViewPort() bool {
 	return selectedLineIdx >= startIdx && selectedLineIdx < startIdx+length
 }
 
-func (self *LBLController) getContentToRender() string {
-	return self.context.GetState().RenderForLineIndices(self.context.GetIncludedLineIndices())
-}
-
 func (self *LBLController) HandlePrevPage() error {
 	self.context.GetState().SetLineSelectMode()
 	self.context.GetState().AdjustSelectedLineIdx(-self.context.GetViewTrait().PageDelta())

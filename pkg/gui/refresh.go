@@ -578,16 +578,20 @@ func (gui *Gui) refreshStagingPanel(selectedLineIdx int) error {
 	}
 
 	if mainContext.GetState() == nil && !secondaryFocused {
-		// TODO: switch focus to secondary
+		if err := gui.c.PushContext(secondaryContext); err != nil {
+			return err
+		}
 	}
 
 	if secondaryContext.GetState() == nil && secondaryFocused {
-		// TODO: switch focus to main
+		if err := gui.c.PushContext(mainContext); err != nil {
+			return err
+		}
 	}
 
 	// TODO: passed focused flag
-	mainContent := mainContext.GetContentToRender()
-	secondaryContent := secondaryContext.GetContentToRender()
+	mainContent := mainContext.GetContentToRender(!secondaryFocused)
+	secondaryContent := secondaryContext.GetContentToRender(secondaryFocused)
 
 	return gui.refreshMainViews(refreshMainOpts{
 		pair: gui.stagingMainContextPair(),

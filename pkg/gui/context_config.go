@@ -87,6 +87,9 @@ func (gui *Gui) contextTree() *context.ContextTree {
 				if opts.NewContextKey != context.STAGING_SECONDARY_CONTEXT_KEY {
 					gui.Views.Staging.Wrap = true
 					gui.Views.StagingSecondary.Wrap = true
+					// TODO: ensure focus is managed properly.
+					gui.State.Contexts.Staging.Render()
+					gui.State.Contexts.StagingSecondary.Render()
 				}
 				return nil
 			},
@@ -111,6 +114,8 @@ func (gui *Gui) contextTree() *context.ContextTree {
 				if opts.NewContextKey != context.STAGING_MAIN_CONTEXT_KEY {
 					gui.Views.Staging.Wrap = true
 					gui.Views.StagingSecondary.Wrap = true
+					gui.State.Contexts.Staging.Render()
+					gui.State.Contexts.StagingSecondary.Render()
 				}
 				return nil
 			},

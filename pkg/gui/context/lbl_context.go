@@ -63,8 +63,12 @@ func (self *LBLContext) GetIncludedLineIndices() []int {
 	return self.getIncludedLineIndices()
 }
 
+func (self *LBLContext) isFocused() bool {
+	return self.c.CurrentContext().GetKey() == self.GetKey()
+}
+
 func (self *LBLContext) RenderAndFocus() error {
-	self.GetView().SetContent(self.GetContentToRender())
+	self.GetView().SetContent(self.GetContentToRender(self.isFocused()))
 
 	if err := self.focusSelection(); err != nil {
 		return err
@@ -76,7 +80,7 @@ func (self *LBLContext) RenderAndFocus() error {
 }
 
 func (self *LBLContext) Render() error {
-	self.GetView().SetContent(self.GetContentToRender())
+	self.GetView().SetContent(self.GetContentToRender(self.isFocused()))
 
 	self.c.Render()
 
@@ -111,8 +115,8 @@ func (self *LBLContext) focusSelection() error {
 	return view.SetCursor(0, selectedLineIdx-newOrigin)
 }
 
-func (self *LBLContext) GetContentToRender() string {
-	return self.GetState().RenderForLineIndices(self.GetIncludedLineIndices())
+func (self *LBLContext) GetContentToRender(isFocused bool) string {
+	return self.GetState().RenderForLineIndices(self.isFocused(), self.GetIncludedLineIndices())
 }
 
 func (self *LBLContext) NavigateTo(selectedLineIdx int) error {

@@ -56,9 +56,9 @@ func (gui *Gui) refreshLBLPatchBuildingPanel(diff string, secondaryDiff string, 
 		return true, nil
 	}
 
-	mainContent := context.GetContentToRender()
+	mainContent := context.GetContentToRender(true)
 	secondaryPatchParser := patch.NewPatchParser(gui.Log, secondaryDiff)
-	secondaryContent := secondaryPatchParser.Render(-1, -1, nil)
+	secondaryContent := secondaryPatchParser.Render(false, -1, -1, nil)
 
 	// TODO: see if this should happen AFTER setting content.
 	if err := context.Focus(); err != nil {
