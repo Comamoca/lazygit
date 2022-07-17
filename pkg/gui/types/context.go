@@ -101,8 +101,8 @@ type IViewTrait interface {
 	ViewPortYBounds() (int, int)
 	ScrollLeft()
 	ScrollRight()
-	ScrollUp()
-	ScrollDown()
+	ScrollUp(value int)
+	ScrollDown(value int)
 	PageDelta() int
 	SelectedLineIdx() int
 }

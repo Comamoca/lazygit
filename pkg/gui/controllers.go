@@ -126,7 +126,7 @@ func (gui *Gui) resetControllers() {
 	commitFilesController := controllers.NewCommitFilesController(common)
 	stagingController := controllers.NewStagingController(common, gui.State.Contexts.Staging, gui.State.Contexts.StagingSecondary)
 	stagingSecondaryController := controllers.NewStagingController(common, gui.State.Contexts.StagingSecondary, gui.State.Contexts.Staging)
-	lblControllerFactory := controllers.NewLBLControllerFactory(gui.c)
+	lblControllerFactory := controllers.NewLBLControllerFactory(common)
 
 	setSubCommits := func(commits []*models.Commit) { gui.State.Model.SubCommits = commits }
 

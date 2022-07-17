@@ -297,13 +297,3 @@ func (gui *Gui) withLBLActiveCheck(f func(*lbl.State) error) error {
 
 	return f(state)
 }
-
-func (gui *Gui) handleLineByLineEdit() error {
-	file := gui.getSelectedFile()
-	if file == nil {
-		return nil
-	}
-
-	lineNumber := gui.State.Contexts.Staging.GetState().CurrentLineNumber()
-	return gui.helpers.Files.EditFileAtLine(file.Name, lineNumber)
-}

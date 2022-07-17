@@ -51,22 +51,24 @@ func (self *ListController) HandleScrollRight() error {
 }
 
 func (self *ListController) HandleScrollUp() error {
-	self.context.GetViewTrait().ScrollUp()
+	scrollHeight := self.c.UserConfig.Gui.ScrollHeight
+	self.context.GetViewTrait().ScrollUp(scrollHeight)
 
 	// we only need to do a line change if our line has been pushed out of the viewport, because
 	// at the moment much logic depends on the selected line always being visible
 	if !self.isSelectedLineInViewPort() {
-		return self.handleLineChange(-1)
+		return self.handleLineChange(-scrollHeight)
 	}
 
 	return nil
 }
 
 func (self *ListController) HandleScrollDown() error {
-	self.context.GetViewTrait().ScrollDown()
+	scrollHeight := self.c.UserConfig.Gui.ScrollHeight
+	self.context.GetViewTrait().ScrollDown(scrollHeight)
 
 	if !self.isSelectedLineInViewPort() {
-		return self.handleLineChange(1)
+		return self.handleLineChange(scrollHeight)
 	}
 
 	return nil
@@ -168,7 +170,6 @@ func (self *ListController) GetKeybindings(opts types.KeybindingsOpts) []*types.
 			Key:         opts.GetKey(opts.Config.Universal.StartSearch),
 			Handler:     func() error { self.c.OpenSearch(); return nil },
 			Description: self.c.Tr.LcStartSearch,
-			Tag:         "navigation",
 		},
 		{
 			Key:         opts.GetKey(opts.Config.Universal.GotoBottom),

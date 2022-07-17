@@ -53,7 +53,8 @@ func (gui *Gui) onPatchBuildingFocus(selectedLineIdx int) error {
 	gui.Mutexes.LineByLinePanelMutex.Lock()
 	defer gui.Mutexes.LineByLinePanelMutex.Unlock()
 
-	if gui.State.Panels.LineByLine == nil || selectedLineIdx != -1 {
+	// TODO: switch batck to patch building state
+	if gui.State.Contexts.Staging.GetState() == nil || selectedLineIdx != -1 {
 		return gui.refreshPatchBuildingPanel(selectedLineIdx)
 	}
 

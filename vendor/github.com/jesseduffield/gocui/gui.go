@@ -83,6 +83,8 @@ type ViewMouseBinding struct {
 
 	Handler func(ViewMouseBindingOpts) error
 
+	Modifier Modifier
+
 	// must be a mouse key
 	Key Key
 }
@@ -1207,7 +1209,7 @@ func (g *Gui) onKey(ev *GocuiEvent) error {
 			return err
 		}
 
-		if ev.Mod == ModNone && IsMouseKey(ev.Key) {
+		if IsMouseKey(ev.Key) {
 			opts := ViewMouseBindingOpts{X: newCx + v.ox, Y: newCy + v.oy}
 			matched, err := g.execMouseKeybindings(v, ev, opts)
 			if err != nil {
@@ -1228,7 +1230,9 @@ func (g *Gui) onKey(ev *GocuiEvent) error {
 
 func (g *Gui) execMouseKeybindings(view *View, ev *GocuiEvent, opts ViewMouseBindingOpts) (bool, error) {
 	isMatch := func(binding *ViewMouseBinding) bool {
-		return binding.ViewName == view.Name() && ev.Key == binding.Key
+		return binding.ViewName == view.Name() &&
+			ev.Key == binding.Key &&
+			ev.Mod == binding.Modifier
 	}
 
 	// first pass looks for ones that match the focused view

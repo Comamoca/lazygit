@@ -19,7 +19,6 @@ import (
 	"github.com/jesseduffield/lazygit/pkg/config"
 	"github.com/jesseduffield/lazygit/pkg/gui/context"
 	"github.com/jesseduffield/lazygit/pkg/gui/controllers/helpers"
-	"github.com/jesseduffield/lazygit/pkg/gui/lbl"
 	"github.com/jesseduffield/lazygit/pkg/gui/mergeconflicts"
 	"github.com/jesseduffield/lazygit/pkg/gui/modes/cherrypicking"
 	"github.com/jesseduffield/lazygit/pkg/gui/modes/diffing"
@@ -198,14 +197,6 @@ type GuiRepoState struct {
 	CurrentPopupOpts *types.CreatePopupPanelOpts
 }
 
-// for now the staging panel state, unlike the other panel states, is going to be
-// non-mutative, so that we don't accidentally end up
-// with mismatches of data. We might change this in the future
-type LblPanelState struct {
-	*lbl.State
-	SecondaryFocused bool // this is for if we show the left or right panel
-}
-
 type MergingPanelState struct {
 	*mergeconflicts.State
 
@@ -217,8 +208,7 @@ type MergingPanelState struct {
 // as we move things to the new context approach we're going to eventually
 // remove this struct altogether and store this state on the contexts.
 type panelStates struct {
-	LineByLine *LblPanelState
-	Merging    *MergingPanelState
+	Merging *MergingPanelState
 }
 
 type searchingState struct {

@@ -53,7 +53,7 @@ func (gui *Gui) onStagingFocus(forceSecondaryFocused bool, selectedLineIdx int) 
 	gui.Mutexes.LineByLinePanelMutex.Lock()
 	defer gui.Mutexes.LineByLinePanelMutex.Unlock()
 
-	if gui.State.Panels.LineByLine == nil || selectedLineIdx != -1 {
+	if gui.State.Contexts.Staging.GetState() == nil || selectedLineIdx != -1 {
 		return gui.refreshStagingPanel(selectedLineIdx)
 	}
 
@@ -147,15 +147,6 @@ func (gui *Gui) applySelection(reverse bool, state *lbl.State) error {
 		return err
 	}
 	return nil
-}
-
-func (gui *Gui) HandleOpenFile() error {
-	file := gui.getSelectedFile()
-	if file == nil {
-		return nil
-	}
-
-	return gui.helpers.Files.OpenFile(file.GetPath())
 }
 
 func (gui *Gui) handleEditHunk() error {
