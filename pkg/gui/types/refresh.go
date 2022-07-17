@@ -14,6 +14,8 @@ const (
 	REMOTES
 	STATUS
 	SUBMODULES
+	STAGING
+	PATCH_BUILDING
 	// not actually a view. Will refactor this later
 	BISECT_INFO
 )

@@ -139,8 +139,13 @@ func (gui *Gui) layout(g *gocui.Gui) error {
 		view.SetOnSelectItem(gui.onSelectItemWrapper(listContext.OnSearchSelect))
 	}
 
-	// TODO: FIX THIS
-	gui.Views.Main.SetOnSelectItem(gui.onSelectItemWrapper(gui.handlelineByLineNavigateTo))
+	for _, context := range gui.getLblContexts() {
+		context.GetView().SetOnSelectItem(gui.onSelectItemWrapper(
+			func(selectedLineIdx int) error {
+				return context.NavigateTo(selectedLineIdx)
+			}),
+		)
+	}
 
 	mainViewWidth, mainViewHeight := gui.Views.Main.Size()
 	if mainViewWidth != gui.PrevLayout.MainWidth || mainViewHeight != gui.PrevLayout.MainHeight {

@@ -1,6 +1,7 @@
 package gui
 
 import (
+	"github.com/jesseduffield/lazygit/pkg/commands/patch"
 	"github.com/jesseduffield/lazygit/pkg/gui/lbl"
 	"github.com/jesseduffield/lazygit/pkg/gui/types"
 	"github.com/samber/lo"
@@ -30,7 +31,7 @@ func (gui *Gui) refreshPatchBuildingPanel(selectedLineIdx int) error {
 		return err
 	}
 
-	empty, err := gui.refreshLineByLinePanel(diff, secondaryDiff, gui.Tr.Patch, gui.Tr.CustomPatch, false, selectedLineIdx)
+	empty, err := gui.refreshLBLPatchBuildingPanel(diff, secondaryDiff, selectedLineIdx)
 	if err != nil {
 		return err
 	}
@@ -40,6 +41,41 @@ func (gui *Gui) refreshPatchBuildingPanel(selectedLineIdx int) error {
 	}
 
 	return nil
+}
+
+// returns whether the patch is empty so caller can escape if necessary
+// both diffs should be non-coloured because we'll parse them and colour them here
+func (gui *Gui) refreshLBLPatchBuildingPanel(diff string, secondaryDiff string, selectedLineIdx int) (bool, error) {
+	context := gui.State.Contexts.PatchBuilding
+
+	oldState := context.GetState()
+
+	state := lbl.NewState(diff, selectedLineIdx, oldState, gui.Log)
+	context.SetState(state)
+	if state == nil {
+		return true, nil
+	}
+
+	mainContent := context.GetContentToRender()
+	secondaryPatchParser := patch.NewPatchParser(gui.Log, secondaryDiff)
+	secondaryContent := secondaryPatchParser.Render(-1, -1, nil)
+
+	// TODO: see if this should happen AFTER setting content.
+	if err := context.Focus(); err != nil {
+		return false, err
+	}
+
+	return false, gui.refreshMainViews(refreshMainOpts{
+		pair: gui.patchBuildingMainContextPair(),
+		main: &viewUpdateOpts{
+			task:  NewRenderStringWithoutScrollTask(mainContent),
+			title: gui.Tr.Patch,
+		},
+		secondary: &viewUpdateOpts{
+			task:  NewRenderStringWithoutScrollTask(secondaryContent),
+			title: gui.Tr.CustomPatch,
+		},
+	})
 }
 
 func (gui *Gui) handleRefreshPatchBuildingPanel(selectedLineIdx int) error {
@@ -62,7 +98,7 @@ func (gui *Gui) onPatchBuildingFocus(selectedLineIdx int) error {
 }
 
 func (gui *Gui) handleToggleSelectionForPatch() error {
-	err := gui.withLBLActiveCheck(func(state *lbl.State) error {
+	err := gui.withLBLActiveCheck(gui.State.Contexts.PatchBuilding, func(state *lbl.State) error {
 		toggleFunc := gui.git.Patch.PatchManager.AddFileLineRange
 		filename := gui.getSelectedCommitFileName()
 		includedLineIndices, err := gui.git.Patch.PatchManager.GetFileIncLineIndices(filename)

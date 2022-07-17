@@ -88,8 +88,14 @@ type ILBLContext interface {
 	Context
 
 	GetState() *lbl.State
+	SetState(*lbl.State)
 	GetViewTrait() IViewTrait
 	GetIncludedLineIndices() []int
+	RenderAndFocus() error
+	Render() error
+	Focus() error
+	GetContentToRender() string
+	NavigateTo(selectedLineIdx int) error
 }
 
 type IViewTrait interface {

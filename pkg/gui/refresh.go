@@ -12,6 +12,7 @@ import (
 	"github.com/jesseduffield/lazygit/pkg/commands/types/enums"
 	"github.com/jesseduffield/lazygit/pkg/gui/context"
 	"github.com/jesseduffield/lazygit/pkg/gui/filetree"
+	"github.com/jesseduffield/lazygit/pkg/gui/lbl"
 	"github.com/jesseduffield/lazygit/pkg/gui/mergeconflicts"
 	"github.com/jesseduffield/lazygit/pkg/gui/presentation"
 	"github.com/jesseduffield/lazygit/pkg/gui/style"
@@ -31,6 +32,7 @@ func getScopeNames(scopes []types.RefreshableView) []string {
 		types.REMOTES:     "remotes",
 		types.STATUS:      "status",
 		types.BISECT_INFO: "bisect",
+		types.STAGING:     "staging",
 	}
 
 	return slices.Map(scopes, func(scope types.RefreshableView) string {
@@ -70,6 +72,8 @@ func (gui *Gui) Refresh(options types.RefreshOptions) error {
 	f := func() {
 		var scopeSet *set.Set[types.RefreshableView]
 		if len(options.Scope) == 0 {
+			// not refreshing staging/patch-building unless explicitly requested because we only need
+			// to refresh those while focused.
 			scopeSet = set.NewFromSlice([]types.RefreshableView{
 				types.COMMITS,
 				types.BRANCHES,
@@ -119,6 +123,14 @@ func (gui *Gui) Refresh(options types.RefreshOptions) error {
 
 		if scopeSet.Includes(types.REMOTES) {
 			refresh(func() { _ = gui.refreshRemotes() })
+		}
+
+		if scopeSet.Includes(types.STAGING) {
+			refresh(func() { _ = gui.refreshStagingPanel(-1) })
+		}
+
+		if scopeSet.Includes(types.PATCH_BUILDING) {
+			refresh(func() { _ = gui.refreshPatchBuildingPanel(-1) })
 		}
 
 		wg.Wait()
@@ -534,4 +546,58 @@ func (gui *Gui) refreshStatus() {
 	status += fmt.Sprintf("%s → %s ", repoName, name)
 
 	gui.setViewContent(gui.Views.Status, status)
+}
+
+func (gui *Gui) refreshStagingPanel(selectedLineIdx int) error {
+	secondaryFocused := gui.secondaryStagingFocused()
+	mainContext := gui.State.Contexts.Staging
+	secondaryContext := gui.State.Contexts.StagingSecondary
+	mainSelectedLineIdx := selectedLineIdx
+	secondarySelectedLineIdx := -1
+	if secondaryFocused {
+		mainSelectedLineIdx, secondarySelectedLineIdx = secondarySelectedLineIdx, mainSelectedLineIdx
+	}
+
+	file := gui.getSelectedFile()
+	if file == nil || (!file.HasUnstagedChanges && !file.HasStagedChanges) {
+		return gui.handleStagingEscape()
+	}
+
+	mainDiff := gui.git.WorkingTree.WorktreeFileDiff(file, true, false, false)
+	secondaryDiff := gui.git.WorkingTree.WorktreeFileDiff(file, true, true, false)
+
+	mainContext.SetState(
+		lbl.NewState(mainDiff, mainSelectedLineIdx, mainContext.GetState(), gui.Log),
+	)
+	secondaryContext.SetState(
+		lbl.NewState(secondaryDiff, secondarySelectedLineIdx, secondaryContext.GetState(), gui.Log),
+	)
+
+	if mainContext.GetState() == nil && secondaryContext.GetState() == nil {
+		return gui.handleStagingEscape()
+	}
+
+	if mainContext.GetState() == nil && !secondaryFocused {
+		// TODO: switch focus to secondary
+	}
+
+	if secondaryContext.GetState() == nil && secondaryFocused {
+		// TODO: switch focus to main
+	}
+
+	// TODO: passed focused flag
+	mainContent := mainContext.GetContentToRender()
+	secondaryContent := secondaryContext.GetContentToRender()
+
+	return gui.refreshMainViews(refreshMainOpts{
+		pair: gui.stagingMainContextPair(),
+		main: &viewUpdateOpts{
+			task:  NewRenderStringWithoutScrollTask(mainContent),
+			title: gui.Tr.UnstagedChanges,
+		},
+		secondary: &viewUpdateOpts{
+			task:  NewRenderStringWithoutScrollTask(secondaryContent),
+			title: gui.Tr.StagedChanges,
+		},
+	})
 }

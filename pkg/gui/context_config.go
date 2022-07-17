@@ -87,7 +87,6 @@ func (gui *Gui) contextTree() *context.ContextTree {
 				if opts.NewContextKey != context.STAGING_SECONDARY_CONTEXT_KEY {
 					gui.Views.Staging.Wrap = true
 					gui.Views.StagingSecondary.Wrap = true
-					gui.escapeLineByLinePanel()
 				}
 				return nil
 			},
@@ -112,7 +111,6 @@ func (gui *Gui) contextTree() *context.ContextTree {
 				if opts.NewContextKey != context.STAGING_MAIN_CONTEXT_KEY {
 					gui.Views.Staging.Wrap = true
 					gui.Views.StagingSecondary.Wrap = true
-					gui.escapeLineByLinePanel()
 				}
 				return nil
 			},
@@ -137,7 +135,6 @@ func (gui *Gui) contextTree() *context.ContextTree {
 			func(opts types.OnFocusLostOpts) error {
 				gui.Views.PatchBuilding.Wrap = true
 
-				gui.escapeLineByLinePanel()
 				return nil
 			},
 			func() []int {
@@ -250,5 +247,13 @@ func (gui *Gui) contextTree() *context.ContextTree {
 func OnFocusWrapper(f func() error) func(opts types.OnFocusOpts) error {
 	return func(opts types.OnFocusOpts) error {
 		return f()
+	}
+}
+
+func (gui *Gui) getLblContexts() []types.ILBLContext {
+	return []types.ILBLContext{
+		gui.State.Contexts.Staging,
+		gui.State.Contexts.StagingSecondary,
+		gui.State.Contexts.PatchBuilding,
 	}
 }

@@ -12,6 +12,7 @@ type LBLContext struct {
 	lblState               *lbl.State
 	viewTrait              *ViewTrait
 	getIncludedLineIndices func() []int
+	c                      *types.HelperCommon
 }
 
 var _ types.ILBLContext = (*LBLContext)(nil)
@@ -31,6 +32,7 @@ func NewLBLContext(
 	return &LBLContext{
 		lblState:               nil,
 		viewTrait:              NewViewTrait(view),
+		c:                      c,
 		getIncludedLineIndices: getIncludedLineIndices,
 		SimpleContext: NewSimpleContext(NewBaseContext(NewBaseContextOpts{
 			View:       view,
@@ -59,4 +61,63 @@ func (self *LBLContext) GetViewTrait() types.IViewTrait {
 
 func (self *LBLContext) GetIncludedLineIndices() []int {
 	return self.getIncludedLineIndices()
+}
+
+func (self *LBLContext) RenderAndFocus() error {
+	self.GetView().SetContent(self.GetContentToRender())
+
+	if err := self.focusSelection(); err != nil {
+		return err
+	}
+
+	self.c.Render()
+
+	return nil
+}
+
+func (self *LBLContext) Render() error {
+	self.GetView().SetContent(self.GetContentToRender())
+
+	self.c.Render()
+
+	return nil
+}
+
+func (self *LBLContext) Focus() error {
+	if err := self.focusSelection(); err != nil {
+		return err
+	}
+
+	self.c.Render()
+
+	return nil
+}
+
+func (self *LBLContext) focusSelection() error {
+	view := self.GetView()
+	state := self.GetState()
+	_, viewHeight := view.Size()
+	bufferHeight := viewHeight - 1
+	_, origin := view.Origin()
+
+	selectedLineIdx := state.GetSelectedLineIdx()
+
+	newOrigin := state.CalculateOrigin(origin, bufferHeight)
+
+	if err := view.SetOriginY(newOrigin); err != nil {
+		return err
+	}
+
+	return view.SetCursor(0, selectedLineIdx-newOrigin)
+}
+
+func (self *LBLContext) GetContentToRender() string {
+	return self.GetState().RenderForLineIndices(self.GetIncludedLineIndices())
+}
+
+func (self *LBLContext) NavigateTo(selectedLineIdx int) error {
+	self.GetState().SetLineSelectMode()
+	self.GetState().SelectLine(selectedLineIdx)
+
+	return self.RenderAndFocus()
 }

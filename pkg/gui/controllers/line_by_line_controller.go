@@ -34,188 +34,6 @@ func (self *LBLController) Context() types.Context {
 	return self.context
 }
 
-func (self *LBLController) HandlePrevLine() error {
-	self.context.GetState().CycleSelection(false)
-
-	return nil
-}
-
-func (self *LBLController) HandleNextLine() error {
-	self.context.GetState().CycleSelection(true)
-
-	return nil
-}
-
-func (self *LBLController) HandlePrevHunk() error {
-	self.context.GetState().CycleHunk(false)
-
-	return nil
-}
-
-func (self *LBLController) HandleNextHunk() error {
-	self.context.GetState().CycleHunk(true)
-
-	return nil
-}
-
-func (self *LBLController) HandleToggleSelectRange() error {
-	self.context.GetState().ToggleSelectRange()
-
-	return nil
-}
-
-func (self *LBLController) HandleToggleSelectHunk() error {
-	self.context.GetState().ToggleSelectHunk()
-
-	return nil
-}
-
-func (self *LBLController) HandleScrollLeft() error {
-	self.context.GetViewTrait().ScrollLeft()
-
-	return nil
-}
-
-func (self *LBLController) HandleScrollRight() error {
-	self.context.GetViewTrait().ScrollRight()
-
-	return nil
-}
-
-func (self *LBLController) HandleScrollUp() error {
-	self.context.GetViewTrait().ScrollUp(self.c.UserConfig.Gui.ScrollHeight)
-
-	return self.render()
-}
-
-func (self *LBLController) HandleScrollDown() error {
-	self.context.GetViewTrait().ScrollDown(self.c.UserConfig.Gui.ScrollHeight)
-
-	return self.render()
-}
-
-func (self *LBLController) isSelectedLineInViewPort() bool {
-	selectedLineIdx := self.context.GetState().GetSelectedLineIdx()
-	startIdx, length := self.context.GetViewTrait().ViewPortYBounds()
-	return selectedLineIdx >= startIdx && selectedLineIdx < startIdx+length
-}
-
-func (self *LBLController) getContentToRender() string {
-	return self.context.GetState().RenderForLineIndices(self.context.GetIncludedLineIndices())
-}
-
-func (self *LBLController) HandlePrevPage() error {
-	self.context.GetState().SetLineSelectMode()
-	self.context.GetState().AdjustSelectedLineIdx(-self.context.GetViewTrait().PageDelta())
-
-	return nil
-}
-
-func (self *LBLController) HandleNextPage() error {
-	self.context.GetState().SetLineSelectMode()
-	self.context.GetState().AdjustSelectedLineIdx(self.context.GetViewTrait().PageDelta())
-
-	return nil
-}
-
-func (self *LBLController) HandleGotoTop() error {
-	self.context.GetState().SelectTop()
-
-	return nil
-}
-
-func (self *LBLController) HandleGotoBottom() error {
-	self.context.GetState().SelectBottom()
-
-	return nil
-}
-
-func (self *LBLController) HandleMouseDown() error {
-	self.context.GetState().SelectNewLineForRange(self.context.GetViewTrait().SelectedLineIdx())
-
-	return nil
-}
-
-func (self *LBLController) HandleMouseDrag() error {
-	self.context.GetState().SelectLine(self.context.GetViewTrait().SelectedLineIdx())
-
-	return nil
-}
-
-func (self *LBLController) CopySelectedToClipboard() error {
-	selected := self.context.GetState().PlainRenderSelected()
-
-	self.c.LogAction(self.c.Tr.Actions.CopySelectedTextToClipboard)
-	if err := self.os.CopyToClipboard(selected); err != nil {
-		return self.c.Error(err)
-	}
-
-	return nil
-}
-
-// TODO: use or delete
-func (self *LBLController) pushContextIfNotFocused() error {
-	if !self.isFocused() {
-		if err := self.c.PushContext(self.context); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (self *LBLController) isFocused() bool {
-	return self.c.CurrentContext().GetKey() == self.context.GetKey()
-}
-
-func (self *LBLController) renderAndFocus() error {
-	self.context.GetView().SetContent(self.getContentToRender())
-
-	if err := self.focusSelection(); err != nil {
-		return err
-	}
-
-	self.c.Render()
-
-	return nil
-}
-
-func (self *LBLController) render() error {
-	self.context.GetView().SetContent(self.getContentToRender())
-
-	self.c.Render()
-
-	return nil
-}
-
-func (self *LBLController) focusSelection() error {
-	view := self.context.GetView()
-	state := self.context.GetState()
-	_, viewHeight := view.Size()
-	bufferHeight := viewHeight - 1
-	_, origin := view.Origin()
-
-	selectedLineIdx := state.GetSelectedLineIdx()
-
-	newOrigin := state.CalculateOrigin(origin, bufferHeight)
-
-	if err := view.SetOriginY(newOrigin); err != nil {
-		return err
-	}
-
-	return view.SetCursor(0, selectedLineIdx-newOrigin)
-}
-
-func (self *LBLController) withRenderAndFocus(f func() error) func() error {
-	return func() error {
-		if err := f(); err != nil {
-			return err
-		}
-
-		return self.renderAndFocus()
-	}
-}
-
 func (self *LBLController) GetKeybindings(opts types.KeybindingsOpts) []*types.Binding {
 	return []*types.Binding{
 		{
@@ -363,5 +181,149 @@ func (self *LBLController) GetMouseKeybindings(opts types.KeybindingsOpts) []*go
 				return self.withRenderAndFocus(self.HandleMouseDrag)()
 			},
 		},
+	}
+}
+
+func (self *LBLController) HandlePrevLine() error {
+	self.context.GetState().CycleSelection(false)
+
+	return nil
+}
+
+func (self *LBLController) HandleNextLine() error {
+	self.context.GetState().CycleSelection(true)
+
+	return nil
+}
+
+func (self *LBLController) HandlePrevHunk() error {
+	self.context.GetState().CycleHunk(false)
+
+	return nil
+}
+
+func (self *LBLController) HandleNextHunk() error {
+	self.context.GetState().CycleHunk(true)
+
+	return nil
+}
+
+func (self *LBLController) HandleToggleSelectRange() error {
+	self.context.GetState().ToggleSelectRange()
+
+	return nil
+}
+
+func (self *LBLController) HandleToggleSelectHunk() error {
+	self.context.GetState().ToggleSelectHunk()
+
+	return nil
+}
+
+func (self *LBLController) HandleScrollLeft() error {
+	self.context.GetViewTrait().ScrollLeft()
+
+	return nil
+}
+
+func (self *LBLController) HandleScrollRight() error {
+	self.context.GetViewTrait().ScrollRight()
+
+	return nil
+}
+
+func (self *LBLController) HandleScrollUp() error {
+	self.context.GetViewTrait().ScrollUp(self.c.UserConfig.Gui.ScrollHeight)
+
+	return self.context.Render()
+}
+
+func (self *LBLController) HandleScrollDown() error {
+	self.context.GetViewTrait().ScrollDown(self.c.UserConfig.Gui.ScrollHeight)
+
+	return self.context.Render()
+}
+
+func (self *LBLController) isSelectedLineInViewPort() bool {
+	selectedLineIdx := self.context.GetState().GetSelectedLineIdx()
+	startIdx, length := self.context.GetViewTrait().ViewPortYBounds()
+	return selectedLineIdx >= startIdx && selectedLineIdx < startIdx+length
+}
+
+func (self *LBLController) getContentToRender() string {
+	return self.context.GetState().RenderForLineIndices(self.context.GetIncludedLineIndices())
+}
+
+func (self *LBLController) HandlePrevPage() error {
+	self.context.GetState().SetLineSelectMode()
+	self.context.GetState().AdjustSelectedLineIdx(-self.context.GetViewTrait().PageDelta())
+
+	return nil
+}
+
+func (self *LBLController) HandleNextPage() error {
+	self.context.GetState().SetLineSelectMode()
+	self.context.GetState().AdjustSelectedLineIdx(self.context.GetViewTrait().PageDelta())
+
+	return nil
+}
+
+func (self *LBLController) HandleGotoTop() error {
+	self.context.GetState().SelectTop()
+
+	return nil
+}
+
+func (self *LBLController) HandleGotoBottom() error {
+	self.context.GetState().SelectBottom()
+
+	return nil
+}
+
+func (self *LBLController) HandleMouseDown() error {
+	self.context.GetState().SelectNewLineForRange(self.context.GetViewTrait().SelectedLineIdx())
+
+	return nil
+}
+
+func (self *LBLController) HandleMouseDrag() error {
+	self.context.GetState().SelectLine(self.context.GetViewTrait().SelectedLineIdx())
+
+	return nil
+}
+
+func (self *LBLController) CopySelectedToClipboard() error {
+	selected := self.context.GetState().PlainRenderSelected()
+
+	self.c.LogAction(self.c.Tr.Actions.CopySelectedTextToClipboard)
+	if err := self.os.CopyToClipboard(selected); err != nil {
+		return self.c.Error(err)
+	}
+
+	return nil
+}
+
+// TODO: use or delete
+func (self *LBLController) pushContextIfNotFocused() error {
+	if !self.isFocused() {
+		if err := self.c.PushContext(self.context); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (self *LBLController) isFocused() bool {
+	return self.c.CurrentContext().GetKey() == self.context.GetKey()
+}
+
+func (self *LBLController) withRenderAndFocus(f func() error) func() error {
+	return func() error {
+		if err := f(); err != nil {
+			return err
+		}
+
+		return self.context.RenderAndFocus()
 	}
 }

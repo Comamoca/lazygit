@@ -321,21 +321,9 @@ func (self *Gui) GetInitialKeybindings() ([]*types.Binding, []*gocui.ViewMouseBi
 		},
 		{
 			ViewName:    "staging",
-			Key:         opts.GetKey(opts.Config.Universal.Select),
-			Handler:     self.handleToggleStagedSelection,
-			Description: self.c.Tr.StageSelection,
-		},
-		{
-			ViewName:    "staging",
-			Key:         opts.GetKey(opts.Config.Universal.Remove),
-			Handler:     self.handleResetSelection,
-			Description: self.c.Tr.ResetSelection,
-		},
-		{
-			ViewName:    "staging",
-			Key:         opts.GetKey(opts.Config.Universal.TogglePanel),
-			Handler:     self.handleTogglePanel,
-			Description: self.c.Tr.TogglePanel,
+			Key:         opts.GetKey(opts.Config.Main.EditSelectHunk),
+			Handler:     self.handleEditHunk,
+			Description: self.c.Tr.EditHunk,
 		},
 		{
 			ViewName:    "patchBuilding",
@@ -348,12 +336,6 @@ func (self *Gui) GetInitialKeybindings() ([]*types.Binding, []*gocui.ViewMouseBi
 			Key:         opts.GetKey(opts.Config.Universal.Select),
 			Handler:     self.handleToggleSelectionForPatch,
 			Description: self.c.Tr.ToggleSelectionForPatch,
-		},
-		{
-			ViewName:    "staging",
-			Key:         opts.GetKey(opts.Config.Main.EditSelectHunk),
-			Handler:     self.handleEditHunk,
-			Description: self.c.Tr.EditHunk,
 		},
 		{
 			ViewName: "patchBuildingSecondary",
