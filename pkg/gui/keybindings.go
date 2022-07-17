@@ -320,12 +320,6 @@ func (self *Gui) GetInitialKeybindings() ([]*types.Binding, []*gocui.ViewMouseBi
 			Alternative: "fn+down",
 		},
 		{
-			ViewName:    "staging",
-			Key:         opts.GetKey(opts.Config.Main.EditSelectHunk),
-			Handler:     self.handleEditHunk,
-			Description: self.c.Tr.EditHunk,
-		},
-		{
 			ViewName:    "patchBuilding",
 			Key:         opts.GetKey(opts.Config.Universal.Return),
 			Handler:     self.handleEscapePatchBuildingPanel,

@@ -32,7 +32,7 @@ func NewStagingController(
 		controllerCommon: common,
 		context:          context,
 		otherContext:     otherContext,
-		staged:           true,
+		staged:           staged,
 	}
 }
 
@@ -67,6 +67,11 @@ func (self *StagingController) GetKeybindings(opts types.KeybindingsOpts) []*typ
 			Key:         opts.GetKey(opts.Config.Universal.Remove),
 			Handler:     self.ResetSelection,
 			Description: self.c.Tr.ResetSelection,
+		},
+		{
+			Key:         opts.GetKey(opts.Config.Main.EditSelectHunk),
+			Handler:     self.EditHunk,
+			Description: self.c.Tr.EditHunk,
 		},
 	}
 }
